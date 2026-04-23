@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>عالمنا | حبيبي وحبيبتي</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Cairo', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة الترحيب */
+        .welcome-card {
+            background: white;
+            border-radius: 48px;
+            padding: 40px 25px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        .welcome-card h1 {
+            font-size: 2rem;
+            color: #5a3d6e;
+            margin-bottom: 10px;
+        }
+
+        .welcome-card input {
+            width: 90%;
+            padding: 16px;
+            border: 2px solid #e9d5ff;
+            border-radius: 60px;
+            font-size: 1rem;
+            margin: 20px 0;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .welcome-card button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* اللعبة الرئيسية */
+        .game-container {
+            background: white;
+            border-radius: 48px;
+            padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        /* التبويبات */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f3e8ff;
+            padding: 6px;
+            border-radius: 60px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* الشات */
+        .chat-area {
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #faf5ff;
+            border-radius: 32px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            max-width: 80%;
+        }
+
+        .message-mine {
+            text-align: right;
+            margin-left: auto;
+        }
+
+        .message-mine .bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 22px 22px 8px 22px;
+        }
+
+        .message-theirs .bubble {
+            background: #e9d5ff;
+            color: #4a2c5e;
+            border-radius: 22px 22px 22px 8px;
+        }
+
+        .bubble {
+            display: inline-block;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+        }
+
+        .message small {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            opacity: 0.6;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e9d5ff;
+            border-radius: 40px;
+            font-family: inherit;
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 14px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* اختيار اللعبة */
+        .games-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .game-card {
+            background: #faf5ff;
+            border-radius: 32px;
+            padding: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        .game-card:hover {
+            transform: scale(1.02);
+            background: #f3e8ff;
+        }
+
+        .game-card .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .game-card h3 {
+            color: #5a3d6e;
+            margin-bottom: 5px;
+        }
+
+        .game-card p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        /* حالة انتظار اللاعب */
+        .waiting-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .waiting-screen .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e9d5ff;
+            border-top-color: #764ba2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* منطقة اللعب */
+        .play-area {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .play-area h3 {
+            color: #5a3d6e;
+            margin-bottom: 20px;
+        }
+
+        /* رقعة XO */
+        .xo-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-width: 280px;
+            margin: 20px auto;
+        }
+
+        .xo-cell {
+            aspect-ratio: 1;
+            background: #faf5ff;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .xo-cell.X { color: #667eea; }
+        .xo-cell.O { color: #764ba2; }
+
+        /* ألعاب تانية */
+        .guess-area input {
+            width: 80%;
+            padding: 14px;
+            border: 2px solid #e9d5ff;
+            border-radius: 40px;
+            margin: 15px 0;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .turn-indicator {
+            background: #f3e8ff;
+            padding: 10px;
+            border-radius: 40px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+    // Firebase - بياناتك
+    const firebaseConfig = {
+        apiKey: "AIzaSyCvn2CsKgRvtcGDNHv-T-y8jCQUz1KTYYI",
+        authDomain: "mylovegame.firebaseapp.com",
+        projectId: "mylovegame",
+        storageBucket: "mylovegame.firebasestorage.app",
+        messagingSenderId: "504852537460",
+        appId: "1:504852537460:web:bdc7129ae84c8ea9c33121",
+        databaseURL: "https://mylovegame-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // متغيرات اللعبة
+    let myName = '';
+    let opponent = '';
+    let roomId = 'game_room';
+    let currentGame = null;
+    let myTurn = false;
+    let gameActive = false;
+
+    // متغيرات XO
+    let xoBoard = ['', '', '', '', '', '', '', '', ''];
+    
+    // متغيرات تخمين الرقم
+    let targetNumber = null;
+    let gameType = null;
+
+    // ==================== شاشة البداية ====================
+    function showWelcome() {
+        document.getElementById('app').innerHTML = `
+            <div class="welcome-card">
+                <h1>💕 مرحباً يا روحي 💕</h1>
+                <p style="color:#888; margin-bottom:10px;">قولي اسمك عشان نبدأ</p>
+                <input type="text" id="playerName" placeholder="اسمك..." autocomplete="off">
+                <br>
+                <button onclick="joinGame()">دخليني عندك ❤️</button>
+            </div>
+        `;
+    }
+
+    window.joinGame = function() {
+        const input = document.getElementById('playerName');
+        myName = input.value.trim();
+        if (!myName) {
+            alert("اكتبي اسمك يا قمر 🤍");
+            return;
+        }
+        
+        // تسجيل اللاعب
+        db.ref('room/' + roomId + '/players').set({
+            [myName]: { name: myName, joined: Date.now() }
+        });
+        
+        // الاستماع للاعبين
+        db.ref('room/' + roomId + '/players').on('value', (snapshot) => {
+            const players = snapshot.val();
+            if (players) {
+                const names = Object.keys(players);
+                if (names.length === 2) {
+                    opponent = names.find(n => n !== myName);
+                    showMainGame();
+                } else {
+                    showWaiting();
+                }
+            }
+        });
+    };
+
+    function showWaiting() {
+        document.getElementById('app').innerHTML = `
+            <div class="game-container">
+                <div class="waiting-screen">
+                    <div class="spinner"></div>
+                    <h3>⏳ في انتظار وصول الحبيب/ة ⏳</h3>
+                    <p style="color:#888;">شارك الرابط مع حبيبتك/حبيبك 🤍</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // ==================== اللعبة الرئيسية ====================
+    function showMainGame() {
+        document.getElementById('app').innerHTML = `
+            <div class="game-container">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('chat')">💬 شات</button>
+                    <button class="tab" onclick="switchTab('games')">🎮 ألعاب</button>
+                </div>
+                
+                <div id="chatPanel">
+                    <div class="chat-area">
+                        <div class="messages-list" id="messagesList">
+                            <div class="message message-theirs">
+                                <div class="bubble">✨ اهلاً يا ${myName} ✨ أنا هنا معاك 🤍</div>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatMessage" placeholder="اكتب لي حاجة حلوة..." onkeypress="if(event.key==='Enter') sendChat()">
+                            <button onclick="sendChat()">إرسال</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="gamesPanel" style="display:none;">
+                    <div class="games-grid">
+                        <div class="game-card" onclick="selectGame('xo')">
+                            <div class="emoji">❌⭕</div>
+                            <h3>إكس أو (تيك تاك تو)</h3>
+                            <p>اللعبة الكلاسيكية - مين يكسب الجولة؟</p>
+                        </div>
+                        <div class="game-card" onclick="selectGame('guess')">
+                            <div class="emoji">🔢🎯</div>
+                            <h3>خمن الرقم</h3>
+                            <p>خمن الرقم السري اللي في بالي</p>
+                        </div>
+                    </div>
+                    <div id="gamePlayArea" style="margin-top: 20px;"></div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 10px; background:#faf5ff; border-radius: 30px; text-align: center; font-size:0.8rem;">
+                    👫 مع ${opponent} 🤍
+                </div>
+            </div>
+        `;
+        
+        listenToChat();
+        listenToGameEvents();
+    }
+
+    window.switchTab = function(tab) {
+        const chatPanel = document.getElementById('chatPanel');
+        const gamesPanel = document.getElementById('gamesPanel');
+        const tabs = document.querySelectorAll('.tab');
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        
+        if (tab === 'chat') {
+            chatPanel.style.display = 'block';
+            gamesPanel.style.display = 'none';
+            tabs[0].classList.add('active');
+        } else {
+            chatPanel.style.display = 'none';
+            gamesPanel.style.display = 'block';
+            tabs[1].classList.add('active');
+        }
+    };
+
+    // ==================== الشات ====================
+    function sendChat() {
+        const input = document.getElementById('chatMessage');
+        const msg = input.value.trim();
+        if (!msg) return;
+        
+        db.ref('room/' + roomId + '/chat').push({
+            name: myName,
+            text: msg,
+            time: Date.now()
+        });
+        input.value = '';
+    }
+
+    function listenToChat() {
+        db.ref('room/' + roomId + '/chat').on('child_added', (snapshot) => {
+            const msg = snapshot.val();
+            const msgDiv = document.getElementById('messagesList');
+            const isMine = msg.name === myName;
+            
+            const el = document.createElement('div');
+            el.className = `message ${isMine ? 'message-mine' : 'message-theirs'}`;
+            el.innerHTML = `
+                <div class="bubble">${msg.text}</div>
+                <small>${msg.name}</small>
+            `;
+            msgDiv.appendChild(el);
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+        });
+    }
+
+    // ==================== اختيار اللعبة ====================
+    window.selectGame = function(game) {
+        gameType = game;
+        db.ref('room/' + roomId + '/gameInvite').set({
+            from: myName,
+            game: game,
+            status: 'waiting'
+        });
+        
+        document.getElementById('gamePlayArea').innerHTML = `
+            <div class="waiting-screen">
+                <div class="spinner"></div>
+                <h3>💌 بعتت دعوة لـ ${opponent} 💌</h3>
+                <p>في انتظار الموافقة...</p>
+            </div>
+        `;
+    };
+
+    function listenToGameEvents() {
+        db.ref('room/' + roomId + '/gameInvite').on('value', (snapshot) => {
+            const invite = snapshot.val();
+            if (!invite) return;
+            
+            // لو أنا اللي بعت، نسمع للقبول
+            if (invite.from === myName && invite.status === 'accepted') {
+                startGame(gameType);
+            }
+            
+            // لو حد تاني بعت لي دعوة
+            if (invite.from !== myName && invite.status === 'waiting') {
+                const acceptGame = confirm(`${invite.from} عايز يلعب معاك ${invite.game === 'xo' ? 'XO' : 'تخمين الرقم'}! توافقي؟`);
+                if (acceptGame) {
+                    db.ref('room/' + roomId + '/gameInvite/status').set('accepted');
+                    startGame(invite.game);
+                } else {
+                    db.ref('room/' + roomId + '/gameInvite').remove();
+                }
+            }
+        });
+    }
+
+    // ==================== بدء اللعبة ====================
+    function startGame(game) {
+        currentGame = game;
+        gameActive = true;
+        myTurn = Math.random() < 0.5;
+        
+        if (game === 'xo') {
+            startXOGame();
+        } else if (game === 'guess') {
+            startGuessGame();
+        }
+    }
+
+    // ==================== لعبة XO ====================
+    function startXOGame() {
+        xoBoard = ['', '', '', '', '', '', '', '', ''];
+        
+        let boardHtml = '<div class="xo-board">';
+        for (let i = 0; i < 9; i++) {
+            boardHtml += `<div class="xo-cell" data-index="${i}" onclick="makeMove(${i})">${xoBoard[i]}</div>`;
+        }
+        boardHtml += '</div>';
+        
+        document.getElementById('gamePlayArea').innerHTML = `
+            <div class="play-area">
+                <h3>❌⭕ لعبة XO ❌⭕</h3>
+                ${boardHtml}
+                <div class="turn-indicator" id="turnIndicator">
+                    ${myTurn ? '🎯 دورك أنت 🎯' : `⏳ استنى دور ${opponent} ⏳`}
+                </div>
+                <button onclick="resetGame()">🔄 لعبة جديدة</button>
+            </div>
+        `;
+        
+        updateXODisplay();
+    }
+
+    window.makeMove = function(index) {
+        if (!gameActive || currentGame !== 'xo') return;
+        if (!myTurn) {
+            alert("مش دورك يا حبيبي! استنى شوية 🥺");
+            return;
+        }
+        if (xoBoard[index] !== '') return;
+        
+        xoBoard[index] = 'X';
+        updateXODisplay();
+        
+        // فحص الفوز
+        const winner = checkXOWinner();
+        if (winner) {
+            const msg = winner === 'X' ? '🎉 أنت كسبت! برافو عليكي 🎉' : `😢 ${opponent} كسب الجولة 😢`;
+            alert(msg);
+            gameActive = false;
+            return;
+        }
+        
+        myTurn = false;
+        updateTurnDisplay();
+        
+        // إرسال الحركة للخصم
+        db.ref('room/' + roomId + '/gameMove').set({
+            board: xoBoard,
+            turn: false
+        });
+    };
+
+    function updateXODisplay() {
+        const cells = document.querySelectorAll('.xo-cell');
+        for (let i = 0; i < 9; i++) {
+            if (cells[i]) {
+                cells[i].innerHTML = xoBoard[i];
+                cells[i].className = `xo-cell ${xoBoard[i] === 'X' ? 'X' : (xoBoard[i] === 'O' ? 'O' : '')}`;
+            }
+        }
+    }
+
+    function updateTurnDisplay() {
+        const indicator = document.getElementById('turnIndicator');
+        if (indicator) {
+            indicator.innerHTML = myTurn ? '🎯 دورك أنت 🎯' : `⏳ استنى دور ${opponent} ⏳`;
+        }
+    }
+
+    function checkXOWinner() {
+        const lines = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+        
+        for (let line of lines) {
+            if (xoBoard[line[0]] && xoBoard[line[0]] === xoBoard[line[1]] && xoBoard[line[0]] === xoBoard[line[2]]) {
+                return xoBoard[line[0]];
+            }
+        }
+        return null;
+    }
+
+    // استماع لحركات الخصم
+    db.ref('room/' + roomId + '/gameMove').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && currentGame === 'xo' && !myTurn && gameActive) {
+            xoBoard = data.board;
+            myTurn = true;
+            updateXODisplay();
+            updateTurnDisplay();
+            
+            const winner = checkXOWinner();
+            if (winner) {
+                const msg = winner === 'O' ? '😢 للأسف الخصم كسب' : '🎉 كسبت!';
+                alert(msg);
+                gameActive = false;
+            }
+        }
+    });
+
+    // ==================== لعبة تخمين الرقم ====================
+    function startGuessGame() {
+        targetNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+        
+        document.getElementById('gamePlayArea').innerHTML = `
+            <div class="play-area">
+                <h3>🔢 خمن الرقم (1-100) 🔢</h3>
+                <p>خمني الرقم اللي في بالي!</p>
+                <input type="number" id="guessInput" placeholder="ادخل رقم...">
+                <br>
+                <button onclick="makeGuess()">خمن!</button>
+                <div id="guessFeedback" style="margin-top: 20px;"></div>
+                <div class="turn-indicator">🎲 بالتوفيق يا جميل 🎲</div>
+            </div>
+        `;
+        
+        window.makeGuess = function() {
+            const input = document.getElementById('guessInput');
+            const guess = parseInt(input.value);
+            if (isNaN(guess)) return;
+            
+            attempts++;
+            let feedback = '';
+            
+            if (guess === targetNumber) {
+                feedback = `🎉🎉🎉 صحيح! الرقم كان ${targetNumber} 🎉🎉🎉<br>مبروك يا عبقري!✨`;
+                alert(`🎉 أنت رائعة! الرقم كان ${targetNumber} 🎉`);
+                gameActive = false;
+            } else if (guess < targetNumber) {
+                feedback = `📈 الرقم أكبر من ${guess}`;
+            } else {
+                feedback = `📉 الرقم أصغر من ${guess}`;
+            }
+            
+            document.getElementById('guessFeedback').innerHTML = `${feedback}<br>محاولات: ${attempts}`;
+            input.value = '';
+        };
+    }
+
+    // ==================== إعادة تعيين اللعبة ====================
+    window.resetGame = function() {
+        if (currentGame === 'xo') {
+            startXOGame();
+        }
+    };
+
+    // بداية التشغيل
+    showWelcome();
+</script>
+</body>
+</html>
